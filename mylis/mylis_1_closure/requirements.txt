@@ -1,2 +1,0 @@
-pytest==6.2.4
-dialogue-tester==1.0b5

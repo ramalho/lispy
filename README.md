@@ -1,50 +1,93 @@
-# Learning with lis.py
+# Mylis: a tiny Scheme interpreter
 
-This repository contains variations of Peter Norvig's
-[`lis.py` interpreter](https://github.com/norvig/pytudes/blob/c33cd6835a506a57d9fe73e3a8317d49babb13e8/py/lis.py)
-for a subset of [Scheme](https://en.wikipedia.org/wiki/Scheme_(programming_language)),
-described in his post [(How to Write a (Lisp) Interpreter (in Python))](https://norvig.com/lispy.html).
+**Mylis** is derived from a Python 3.10
+[fork](https://github.com/fluentpython/lispy/tree/main/original/py3.10) of Peter Norvig's
+[**lis.py**](https://norvig.com/lispy.html),
+adding some features for demonstration purposes.
 
+## Interactive use
 
-## Provenance, Copyright and License
+Running `mylis.py` without arguments opens a REPL.
 
-`lis.py` is
-[published](https://github.com/norvig/pytudes/blob/c33cd6835a506a57d9fe73e3a8317d49babb13e8/py/lis.py)
-in the [norvig/pytudes](https://github.com/norvig/pytudes) repository on Github.
-The copyright holder is Peter Norvig and the code is licensed under the
-[MIT license](https://github.com/norvig/pytudes/blob/60168bce8cdfacf57c92a5b2979f0b2e95367753/LICENSE).
+**Mylis** has limited error handling.
+Simple mistakes will crash the interpreter.
 
-Unless otherwise noted, I wrote the changes and additions described in the README files in each directory.
+```
+$ ./mylis.py
+To exit type .q
+▷  x
+🚨  Undefined symbol: 'x'
+▷  pi
+3.141592653589793
+▷  (/ pi 2)
+1.5707963267948966
+▷  (define (half x) (/ x 2))
+▷  (cos (half pi))
+6.123233995736766e-17
+▷  (sin (half pi))
+1.0
+▷  (define (! n)
+⋯    (if (< n 2)
+⋯        1
+⋯        (* n (! (- n 1)))
+⋯    ))
+▷  (! 5)
+120
+▷  (! 42)
+1405006117752879898543142606244511569936384000000000
+▷  .q
+$
+```
 
-## References
-
-### Articles
-
-* Norvig, Peter: [(How to Write a (Lisp) Interpreter (in Python))](https://norvig.com/lispy.html)
-* Norvig, Peter: [(An ((Even Better) Lisp) Interpreter (in Python))](https://norvig.com/lispy2.html)
-* Graham, Paul: [The Roots of Lisp](http://www.paulgraham.com/rootsoflisp.html)
-* Steele, Guy Lewis, Jr.; Sussman, Gerald Jay: [The Art of the Interpreter, or the Modularity Complex](https://dspace.mit.edu/handle/1721.1/6094)
-* McCarthy, John: [Recursive functions of symbolic expressions and their computation by machine, Part I](https://dl.acm.org/doi/abs/10.1145/367177.367199) 🔒
-
-### Books
-
-* Abelson, Harold; Sussman, Gerald Jay; Sussman, Julie: [Structure and Interpretation of Computer Programs, Second Edition](https://mitpress.mit.edu/sites/default/files/sicp/index.html) (SICP)
-* Dybvig, R. Kent: [The Scheme Programming Language, Fourth Edition](https://scheme.com/tspl4/) (TSPL)
-* Harvey, Brian; Wright, Matthew: [Simply Scheme: Introducing Computer Science, Second Edition](https://people.eecs.berkeley.edu/~bh/ss-toc2.html)
-* Friedman, Daniel P.; Felleisen, Matthias: [The Little Schemer, Fourth Edition](https://mitpress.mit.edu/books/little-schemer-fourth-edition) 🔒
-* Butterick, Mathew: [Beautiful Racket—an introduction to language-oriented programming using Racket](https://beautifulracket.com/)
-* Felleisen, Matthias; Findler, Robert Bruce; Flatt, Matthew; Krishnamurthi, Shriram: [How to Design Programs, Second Edition](https://htdp.org/)
-* Krishnamurthi, Shriram: [Programming Languages: Application and Interpretation](https://www.plai.org/) (PLAI)
-* Sperber, Michael; et. al. [Revised<sup>6</sup> Report on the Algorithmic Language Scheme](http://www.r6rs.org/) (R<sup>6</sup>RS)
-
-### Interpreters and tools
-
-* [Racket](https://racket-lang.org/): "the Language-Oriented Programming Language"
-* [GNU Guile](https://www.gnu.org/software/guile/): "GNU Ubiquitous Intelligent Language for Extensions"
-* [Chicken Scheme](https://www.call-cc.org/): "a practical and portable Scheme system"
-* [A Meta-Circular Interpreter for Scheme](https://scheme.com/tspl4/examples.html#./examples:h7): example 12.7 from TSPL
-* [McCarthy's original Lisp](references/jmc.lisp) converted to Common Lisp by Paul Graham ([local copy](references/jmc.lisp), [original download](https://sep.yimg.com/ty/cdn/paulgraham/jmc.lisp?t=1595850613))
+For longer experiments, use source files and
+command-line arguments, as presented next.
 
 
-*Luciano Ramalho*<br/>
-São Paulo, August 23, 2021
+## Command-line integration
+
+You can run programs written in the supported Scheme subset from the
+command-line, like this:
+
+```
+./mylis.py examples/fibo-seq.scm n=20
+(1 1 2 3 5 8 13 21 34 55 89 144 233 377 610 987 1597 2584 4181 6765)
+
+```
+
+The `n=20` option creates an `n` global variable with the given value.
+
+If you read [examples/fibo-seq.scm](examples/fibo-seq.scm)
+you'see that the last line is:
+
+```scheme
+(display (fibo-seq n))
+```
+
+The `n` is not defined in the program,
+so it must be given as a command-line argument: `n=...`
+
+Any command-line option with the syntax `symbol=value`
+will be interpreted as a global definition—with
+the limitation that `value` must be an integer or a float:
+
+```scheme
+(define symbol value)
+```
+
+If you forget to provide a required argument,
+the interpreter will make a suggestion
+(but currently it stops at the first undefined variable found):
+
+```
+$ ./mylis.py examples/fibo-seq.scm
+🚨  'n' was not defined.
+    You can define it as an option:
+    $ ./mylis.py examples/fibo-seq.scm n=<value>
+$ ./mylis.py examples/fibo-seq.scm n=20
+(1 1 2 3 5 8 13 21 34 55 89 144 233 377 610 987 1597 2584 4181 6765)
+
+```
+
+_LR_
+
+São Paulo, August 15, 2021
